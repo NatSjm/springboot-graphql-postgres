@@ -6,6 +6,8 @@ extend type Query {
 
 extend type Mutation {
   newEmployee(employee: EmployeeRequestDto!): Employee
+  updateEmployee(employee: EmployeeRequestDto!, id: ID!): Employee
+  deleteEmployee(id: ID!): Employee
 }
 
 input EmployeeRequestDto {
