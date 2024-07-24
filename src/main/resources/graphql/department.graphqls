@@ -5,6 +5,8 @@ type Query {
 
 type Mutation {
    newDepartment(department: DepartmentRequestDto!): Department
+   updateDepartment(department: DepartmentRequestDto!, id: ID!): Department
+   deleteDepartment(id: ID!): Department
 }
 
 input DepartmentRequestDto {

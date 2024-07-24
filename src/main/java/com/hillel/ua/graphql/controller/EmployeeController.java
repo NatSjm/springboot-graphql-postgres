@@ -9,10 +9,12 @@ import com.hillel.ua.graphql.filter.FilterField;
 import com.hillel.ua.graphql.repository.DepartmentRepository;
 import com.hillel.ua.graphql.repository.EmployeeRepository;
 import com.hillel.ua.graphql.repository.OrganizationRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
+import org.springframework.data.jpa.domain.Specification;
 
 @Controller
 public class EmployeeController {
@@ -21,7 +23,9 @@ public class EmployeeController {
     EmployeeRepository employeeRepository;
     OrganizationRepository organizationRepository;
 
-    EmployeeController(DepartmentRepository departmentRepository, EmployeeRepository employeeRepository, OrganizationRepository organizationRepository) {
+    @Autowired
+    EmployeeController(DepartmentRepository departmentRepository, EmployeeRepository employeeRepository,
+                       OrganizationRepository organizationRepository) {
         this.departmentRepository = departmentRepository;
         this.employeeRepository = employeeRepository;
         this.organizationRepository = organizationRepository;
@@ -41,7 +45,25 @@ public class EmployeeController {
     public Employee newEmployee(@Argument EmployeeRequestDto employee) {
         Department department = departmentRepository.findById(employee.getDepartmentId()).get();
         Organization organization = organizationRepository.findById(employee.getOrganizationId()).get();
-        return employeeRepository.save(new Employee(null, employee.getFirstName(), employee.getLastName(), employee.getPosition(), employee.getAge(), employee.getSalary(), department, organization));
+        return employeeRepository.save(new Employee(null, employee.getFirstName(), employee.getLastName(),
+                employee.getPosition(), employee.getAge(), employee.getSalary(), department, organization));
+    }
+    @MutationMapping
+    public Employee updateEmployee(@Argument EmployeeRequestDto employee, @Argument Integer id) {
+        return employeeRepository.findById(id).map(emp -> {
+            emp.setFirstName(employee.getFirstName());
+            emp.setLastName(employee.getLastName());
+            emp.setAge(employee.getAge());
+            emp.setPosition(employee.getPosition());
+            emp.setSalary(employee.getSalary());
+            return employeeRepository.save(emp);
+        }).orElseThrow();
+    }
+    @MutationMapping
+    public Employee deleteEmployee(@Argument Integer id) {
+    Employee employee = employeeRepository.findById(id).orElseThrow();
+    employeeRepository.delete(employee);
+    return employee;
     }
 
     @QueryMapping

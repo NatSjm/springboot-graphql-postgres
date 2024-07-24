@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres
+    container_name: graphql-db
+    environment:
+      POSTGRES_DB: graphql_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  spring-graphql-app:
+    build: .
+    ports:
+      - "8080:8080"
+    container_name: spring-graphql-app
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
