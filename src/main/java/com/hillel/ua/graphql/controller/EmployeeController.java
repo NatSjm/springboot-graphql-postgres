@@ -1,6 +1,7 @@
 package com.hillel.ua.graphql.controller;
 
 import com.hillel.ua.graphql.dto.EmployeeRequestDto;
+import com.hillel.ua.graphql.dto.PageableRequest;
 import com.hillel.ua.graphql.entities.Department;
 import com.hillel.ua.graphql.entities.Employee;
 import com.hillel.ua.graphql.entities.Organization;
@@ -15,6 +16,9 @@ import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @Controller
 public class EmployeeController {
@@ -46,7 +50,7 @@ public class EmployeeController {
         Department department = departmentRepository.findById(employee.getDepartmentId()).get();
         Organization organization = organizationRepository.findById(employee.getOrganizationId()).get();
         return employeeRepository.save(new Employee(null, employee.getFirstName(), employee.getLastName(),
-                employee.getPosition(), employee.getAge(), employee.getSalary(), department, organization));
+                employee.getPosition(),  employee.getSalary(), employee.getAge(), department, organization));
     }
     @MutationMapping
     public Employee updateEmployee(@Argument EmployeeRequestDto employee, @Argument Integer id) {
@@ -68,14 +72,35 @@ public class EmployeeController {
 
     @QueryMapping
     public Iterable<Employee> employeesWithFilter(@Argument EmployeeFilter filter) {
+        Specification<Employee> spec = buildSpecification(filter);
+        if (spec != null) return employeeRepository.findAll(spec);
+        else return employeeRepository.findAll();
+    }
+
+    @QueryMapping
+    public Page<Employee> employeesPageable(@Argument PageableRequest pageableRequest) {
+        Pageable pageable = PageRequest.of(pageableRequest.getPage(), pageableRequest.getSize());
+        return employeeRepository.findAll(pageable);
+    }
+
+    @QueryMapping
+    public Page<Employee> employeesWithFilterPageable(@Argument EmployeeFilter filter,
+                                                      @Argument PageableRequest pageableRequest) {
+        Specification<Employee> spec = buildSpecification(filter);
+        Pageable pageable = PageRequest.of(pageableRequest.getPage(), pageableRequest.getSize());
+        return employeeRepository.findAll(spec, pageable);
+    }
+
+    private Specification<Employee> buildSpecification(EmployeeFilter filter) {
         Specification<Employee> spec = null;
         if (filter.getSalary() != null) spec = bySalary(filter.getSalary());
         if (filter.getAge() != null) spec = (spec == null ? byAge(filter.getAge()) : spec.and(byAge(filter.getAge())));
         if (filter.getPosition() != null)
             spec = (spec == null ? byPosition(filter.getPosition()) : spec.and(byPosition(filter.getPosition())));
-        if (spec != null) return employeeRepository.findAll(spec);
-        else return employeeRepository.findAll();
+        return spec;
     }
+
+
 
     private Specification<Employee> bySalary(FilterField filterField) {
         return (root, query, builder) -> filterField.generateCriteria(builder, root.get("salary"));
