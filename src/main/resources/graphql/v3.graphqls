@@ -10,6 +10,28 @@ extend type Mutation {
   deleteEmployee(id: ID!): Employee
 }
 
+extend type Query {
+  employeesPageable(pageableRequest: PageableRequest): EmployeePage
+}
+
+extend type Query {
+  employeesWithFilterPageable(filter: EmployeeFilter, pageableRequest: PageableRequest): EmployeePage
+}
+
+
+type EmployeePage {
+  content: [Employee]
+  totalElements: Int
+  totalPages: Int
+  size: Int
+  number: Int
+}
+
+input PageableRequest {
+  page: Int
+  size: Int
+}
+
 input EmployeeRequestDto {
   firstName: String!
   lastName: String!
